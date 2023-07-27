@@ -1,0 +1,22 @@
+{
+  "name": "postal-paperjs",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  },
+  "dependencies": {
+    "canvas-capture": "^2.1.1",
+    "chroma-js": "^2.4.2",
+    "lil-gui": "^0.18.2",
+    "mathjs": "^11.8.2",
+    "paper": "^0.12.17"
+  }
+}
