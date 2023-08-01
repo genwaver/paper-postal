@@ -12,7 +12,7 @@
   "keywords": ["paperjs", "graphic", "gif"],
   "main": "./dist/paper-postal.umd.cjs",
   "module": "./dist/paper-postal.js",
-  "types": "./dist/postal.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/paper-postal.js",
