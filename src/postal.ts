@@ -1,5 +1,5 @@
-import * as paper from 'paper'
 import GUI from 'lil-gui'
+import * as paper from 'paper'
 import { CanvasCapture } from 'canvas-capture'
 
 export interface PostalContent {
@@ -28,6 +28,7 @@ export interface Postal<T extends PostalContent> {
   isRecordingRequested: boolean
   isRecording: boolean
   recordingFrames: number
+  scope: paper.PaperScope
 }
 
 export interface PostalSettings {
@@ -83,13 +84,14 @@ export const create = <T extends PostalContent>(
 
   const finalSettings = {...defaultSettings, ...settings}
   const canvas = setupCanvas(scope, finalSettings)
-  const postalElements = drawPostal<T>(paper.view, onDraw, finalSettings)
+  const postalElements = drawPostal<T>(scope, onDraw, finalSettings)
   const gui = createGUI(finalSettings)
 
   const postal: Postal<T> = {
     ...canvas,
     ...postalElements,
-    view: paper.view,
+    scope: scope,
+    view: scope.view,
     settings: finalSettings,
     isRecording: false,
     isRecordingRequested: false,
@@ -97,7 +99,7 @@ export const create = <T extends PostalContent>(
     gui
   }
 
-  paper.view.onFrame = (event: any) => {
+  scope.view.onFrame = (event: any) => {
     updateSettings(postal)
     onAnimate(postal.content.postalContent, event.count)
     drawPreview(canvas, finalSettings)
@@ -144,8 +146,7 @@ const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { prev
   canvas.width = canvasWidth * window.devicePixelRatio
   canvas.height = canvasHeight * window.devicePixelRatio
 
-  paper.setup(canvas)
-  scope.install(paper)
+  scope.setup(canvas)
 
   return {
     preview,
@@ -153,18 +154,18 @@ const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { prev
   }
 }
 
-const drawPostal = <T extends PostalContent>(view: paper.View, draw: (point: paper.Point, size: paper.Size) => T, settings: PostalSettings) => {
+const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (point: paper.Point, size: paper.Size) => T, settings: PostalSettings) => {
   const background = new paper.Path.Rectangle({
     point: [0, 0],
-    size: view.size.clone(),
+    size: scope.view.size.clone(),
     fillColor: settings.backgroundColor,
   })
 
-  const postalFrameOffset = (view.size.width - view.size.width * settings.postalFrameOffsetFactor) * 0.5
-  const postalFrameSize = view.size.subtract(postalFrameOffset * 2.0)
-  const postalFramePoint = new paper.Point(postalFrameOffset, postalFrameOffset)
+  const postalFrameOffset = (scope.view.size.width - scope.view.size.width * settings.postalFrameOffsetFactor) * 0.5
+  const postalFrameSize = scope.view.size.subtract(postalFrameOffset * 2.0)
+  const postalFramePoint = new scope.Point(postalFrameOffset, postalFrameOffset)
 
-  const postalFrame = new paper.Path.Rectangle({
+  const postalFrame = new scope.Path.Rectangle({
     point: postalFramePoint,
     size: postalFrameSize,
     strokeColor: settings.strokeColor,
@@ -180,7 +181,7 @@ const drawPostal = <T extends PostalContent>(view: paper.View, draw: (point: pap
   const point = postalFramePoint.add(canvasOffset)
   const size = postalFrameSize.subtract(canvasOffset * 2.0)
 
-  const postalCanvas = new paper.Path.Rectangle({
+  const postalCanvas = new scope.Path.Rectangle({
     point: point.add(settings.strokeWidth * 0.5),
     size: size.subtract(settings.strokeWidth * 2.0 * 0.5),
     strokeWidth: settings.strokeWidth,
@@ -189,14 +190,14 @@ const drawPostal = <T extends PostalContent>(view: paper.View, draw: (point: pap
 
   postalCanvas.clipMask = true
 
-  const postalBackground = new paper.Path.Rectangle({
+  const postalBackground = new scope.Path.Rectangle({
     point,
     size,
     fillColor: settings.backgroundColor,
     radius: settings.postalFrameRadius
   })
 
-  const postalStrokeBackground = new paper.Path.Rectangle({
+  const postalStrokeBackground = new scope.Path.Rectangle({
     point: point.add(settings.strokeWidth),
     size: size.subtract(settings.strokeWidth * 2.0),
     strokeColor: settings.strokeColor,
@@ -215,7 +216,7 @@ const drawPostal = <T extends PostalContent>(view: paper.View, draw: (point: pap
   canvasGroup.addChild(content.group)
   canvasGroup.addChild(postalStrokeBackground)
 
-  const group = new paper.Group()
+  const group = new scope.Group()
   group.addChild(background)
   group.addChild(postalFrame)
   group.addChild(canvasGroup)
