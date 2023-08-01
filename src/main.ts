@@ -31,7 +31,7 @@ const animate = (content: MainContent, _event: number) => {
   content.rectangle.rotate(1.0)
 }
 
-const postal = Postal.create<MainContent>(draw, animate)
+const postal = Postal.create<MainContent>(paper, draw, animate)
 
 const settings = {
   record: () => {

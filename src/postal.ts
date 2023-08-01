@@ -76,12 +76,13 @@ const defaultSettings: PostalSettings = {
 }
 
 export const create = <T extends PostalContent>(
+  scope: paper.PaperScope,
   onDraw: (point: paper.Point, size: paper.Size) => T, 
   onAnimate: (content: T, frame: number) => void,
   settings?: PostalParams): Postal<T> => {
 
   const finalSettings = {...defaultSettings, ...settings}
-  const canvas = setupCanvas(finalSettings)
+  const canvas = setupCanvas(scope, finalSettings)
   const postalElements = drawPostal<T>(paper.view, onDraw, finalSettings)
   const gui = createGUI(finalSettings)
 
@@ -118,7 +119,7 @@ export const record = <T extends PostalContent>(postal: Postal<T>, frames: numbe
  * 
  */
 
-const setupCanvas = (settings: PostalSettings) : { preview: HTMLCanvasElement, canvas: HTMLCanvasElement } => {
+const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { preview: HTMLCanvasElement, canvas: HTMLCanvasElement } => {
   const previewElement: HTMLElement | null = document.getElementById('preview')
   const canvasElement: HTMLElement | null = document.getElementById('canvas')
 
@@ -144,6 +145,7 @@ const setupCanvas = (settings: PostalSettings) : { preview: HTMLCanvasElement, c
   canvas.height = canvasHeight * window.devicePixelRatio
 
   paper.setup(canvas)
+  scope.install(paper)
 
   return {
     preview,
