@@ -19,6 +19,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/paper-postal.js",
       "require": "./dist/paper-postal.umd.cjs"
     }
