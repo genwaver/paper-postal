@@ -1,6 +1,7 @@
 import './style.css'
 import * as paper from 'paper'
 import * as Postal from './postal'
+import GUI from 'lil-gui'
 
 interface MainContent extends Postal.PostalContent {
   group: paper.Group
@@ -26,8 +27,17 @@ const draw = (point: paper.Point, size: paper.Size): MainContent => {
   }
 }
 
-const animate = (content: MainContent) => {
+const animate = (content: MainContent, _event: number) => {
   content.rectangle.rotate(1.0)
 }
 
-Postal.create<MainContent>(draw, animate)
+const postal = Postal.create<MainContent>(draw, animate)
+
+const settings = {
+  record: () => {
+    console.log('Record')
+    Postal.record(postal, 30)
+  }
+}
+const gui = new GUI()
+gui.add(settings, 'record')
