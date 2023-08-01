@@ -1,16 +1,32 @@
 {
-  "name": "postal-paperjs",
+  "name": "paper-postal",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "author": "Genwaver",
+  "repository": "https://github.com/genwaver/paper-postal",
+  "main": "./dist/paper-postal.umd.cjs",
+  "module": "./dist/paper-postal.js",
+  "types": "./dist/postal.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/paper-postal.js",
+      "require": "./dist/paper-postal.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/node": "^20.4.5",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "vite": "^4.4.5",
+    "vite-plugin-dts": "^3.4.0"
   },
   "dependencies": {
     "canvas-capture": "^2.1.1",
