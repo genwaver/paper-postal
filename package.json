@@ -1,6 +1,6 @@
 {
   "name": "paper-postal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "author": "Genwaver",
   "repository": {
@@ -9,7 +9,11 @@
   },
   "homepage": "https://github.com/genwaver/paper-postal",
   "license": "MIT",
-  "keywords": ["paperjs", "graphic", "gif"],
+  "keywords": [
+    "paperjs",
+    "graphic",
+    "gif"
+  ],
   "main": "./dist/paper-postal.umd.cjs",
   "module": "./dist/paper-postal.js",
   "types": "./dist/index.d.ts",
