@@ -155,7 +155,7 @@ const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { prev
 }
 
 const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (point: paper.Point, size: paper.Size) => T, settings: PostalSettings) => {
-  const background = new paper.Path.Rectangle({
+  const background = new scope.Path.Rectangle({
     point: [0, 0],
     size: scope.view.size.clone(),
     fillColor: settings.backgroundColor,
