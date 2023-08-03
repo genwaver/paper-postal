@@ -261,10 +261,10 @@ const createGUI = (settings: PostalSettings) => {
 const updateSettings = <T extends PostalContent>(postal: Postal<T>) => {
   const container = document.getElementById('container')
   container!.style.backgroundColor = postal.settings.backgroundColor
-  postal.background.fillColor = new postal.scope.Color(postal.settings.backgroundColor)
-  postal.frame.strokeColor = new postal.scope.Color(postal.settings.strokeColor)
-  postal.content.background.fillColor = new postal.scope.Color(postal.settings.backgroundColor)
-  postal.content.strokeBackground.strokeColor = new postal.scope.Color(postal.settings.strokeColor)
+  postal.background.fillColor = new paper.Color(postal.settings.backgroundColor)
+  postal.frame.strokeColor = new paper.Color(postal.settings.strokeColor)
+  postal.content.background.fillColor = new paper.Color(postal.settings.backgroundColor)
+  postal.content.strokeBackground.strokeColor = new paper.Color(postal.settings.strokeColor)
 }
 
 /**
