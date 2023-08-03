@@ -174,7 +174,7 @@ const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (poi
     radius: settings.postalFrameRadius,
     shadowColor: '#00000026',
     shadowBlur: settings.shadowBlur,
-    shadowOffset: new paper.Point(8.0, 8.0)
+    shadowOffset: new scope.Point(8.0, 8.0)
   })
 
   const canvasOffset = postalFrameSize.width * settings.postalFrameSizeFactor * 0.5
@@ -209,7 +209,7 @@ const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (poi
   background.sendToBack()
 
   const content = draw(point, size)
-  const canvasGroup = new paper.Group()
+  const canvasGroup = new scope.Group()
 
   canvasGroup.addChild(postalCanvas)
   canvasGroup.addChild(postalBackground)
@@ -261,10 +261,10 @@ const createGUI = (settings: PostalSettings) => {
 const updateSettings = <T extends PostalContent>(postal: Postal<T>) => {
   const container = document.getElementById('container')
   container!.style.backgroundColor = postal.settings.backgroundColor
-  postal.background.fillColor = new paper.Color(postal.settings.backgroundColor)
-  postal.frame.strokeColor = new paper.Color(postal.settings.strokeColor)
-  postal.content.background.fillColor = new paper.Color(postal.settings.backgroundColor)
-  postal.content.strokeBackground.strokeColor = new paper.Color(postal.settings.strokeColor)
+  postal.background.fillColor = new postal.scope.Color(postal.settings.backgroundColor)
+  postal.frame.strokeColor = new postal.scope.Color(postal.settings.strokeColor)
+  postal.content.background.fillColor = new postal.scope.Color(postal.settings.backgroundColor)
+  postal.content.strokeBackground.strokeColor = new postal.scope.Color(postal.settings.strokeColor)
 }
 
 /**
