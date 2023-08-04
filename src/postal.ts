@@ -2,28 +2,22 @@ import GUI from 'lil-gui'
 import * as paper from 'paper'
 import { CanvasCapture } from 'canvas-capture'
 
-export interface PostalContent {
-  group: paper.Group
-}
-
-export interface CanvasContent<T extends PostalContent> {
-  group: paper.Group
+export interface CanvasContent{
+  group?: paper.Group
   point: paper.Point,
   size: paper.Size,
-  background: paper.Path
-  strokeBackground: paper.Path
-  postalContent: T
+  background?: paper.Path
+  strokeBackground?: paper.Path
 }
 
-export interface Postal<T extends PostalContent> {
+export interface Postal {
   canvas: HTMLCanvasElement
   preview: HTMLCanvasElement
   view: paper.View
   settings: PostalSettings
-  group: paper.Group,
   background: paper.Path,
-  content: CanvasContent<T>
-  frame: paper.Path,
+  content: CanvasContent
+  frame?: paper.Path,
   gui: GUI,
   isRecordingRequested: boolean
   isRecording: boolean
@@ -76,18 +70,18 @@ const defaultSettings: PostalSettings = {
   recordingFormat: RecordingFormat.GIF
 }
 
-export const create = <T extends PostalContent>(
+export const create = (
   scope: paper.PaperScope,
-  onDraw: (point: paper.Point, size: paper.Size) => T, 
-  onAnimate: (content: T, frame: number) => void,
-  settings?: PostalParams): Postal<T> => {
+  onDraw: (point: paper.Point, size: paper.Size) => void, 
+  onAnimate: ( frame: number) => void,
+  settings?: PostalParams): Postal => {
 
   const finalSettings = {...defaultSettings, ...settings}
   const canvas = setupCanvas(scope, finalSettings)
-  const postalElements = drawPostal<T>(scope, onDraw, finalSettings)
+  const postalElements = drawPostal(scope, onDraw, finalSettings)
   const gui = createGUI(finalSettings)
 
-  const postal: Postal<T> = {
+  const postal: Postal = {
     ...canvas,
     ...postalElements,
     scope: scope,
@@ -101,7 +95,7 @@ export const create = <T extends PostalContent>(
 
   scope.view.onFrame = (event: any) => {
     updateSettings(postal)
-    onAnimate(postal.content.postalContent, event.count)
+    onAnimate(event.count)
     drawPreview(canvas, finalSettings)
     checkRecording(postal, event.count)
   }
@@ -109,7 +103,7 @@ export const create = <T extends PostalContent>(
   return postal
 }
 
-export const record = <T extends PostalContent>(postal: Postal<T>, frames: number) => {
+export const record = (postal: Postal, frames: number) => {
   postal.isRecordingRequested = true
   postal.recordingFrames = frames
 }
@@ -122,16 +116,27 @@ export const record = <T extends PostalContent>(postal: Postal<T>, frames: numbe
  */
 
 const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { preview: HTMLCanvasElement, canvas: HTMLCanvasElement } => {
-  const previewElement: HTMLElement | null = document.getElementById('preview')
-  const canvasElement: HTMLElement | null = document.getElementById('canvas')
+  document.body.style.margin = '0px'
 
-  if (previewElement === null || canvasElement === null)
-    throw(new Error('Missing preview and canvas HTMLCanvasElement. You must add them in your HTML index'))
-  else if (previewElement.nodeName !== 'CANVAS'  || canvasElement.nodeName !== 'CANVAS')
-    throw(new Error('Invalid tag type for preview and canvas html elements. They must be <canvas>'))
+  const container: HTMLDivElement = document.createElement('div')
+  container.style.width = '100%'
+  container.style.height = '100%'
+  container.style.display = 'flex'
+  container.style.alignItems = 'center'
+  container.style.justifyContent = 'center'
+  container.setAttribute('id', 'container')
 
-  const preview: HTMLCanvasElement = previewElement as HTMLCanvasElement
-  const canvas: HTMLCanvasElement = canvasElement as HTMLCanvasElement
+  const preview: HTMLCanvasElement = document.createElement('canvas')
+  preview.setAttribute('id', 'preview')
+  container.appendChild(preview)
+
+  const canvas: HTMLCanvasElement = document.createElement('canvas')
+  canvas.setAttribute('id', 'canvas')
+  canvas.style.position = 'fixed'
+  canvas.style.visibility = 'hidden'
+  container.appendChild(canvas)
+
+  document.body.appendChild(container)
   
   preview.style.width = `${settings.previewSize.width}px`
   preview.style.height = `${settings.previewSize?.height}px`
@@ -154,17 +159,34 @@ const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { prev
   }
 }
 
-const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (point: paper.Point, size: paper.Size) => T, settings: PostalSettings) => {
+const drawPostal = (scope: paper.PaperScope, draw: (point: paper.Point, size: paper.Size) => void, settings: PostalSettings) => {
+  const postalFrameOffset = (scope.view.size.width - scope.view.size.width * settings.postalFrameOffsetFactor) * 0.5
+  const postalFrameSize = scope.view.size.subtract(postalFrameOffset * 2.0)
+  const postalFramePoint = new scope.Point(postalFrameOffset, postalFrameOffset)
+
+  const canvasOffset = postalFrameSize.width * settings.postalFrameSizeFactor * 0.5
+  const point = postalFramePoint.add(canvasOffset)
+  const size = postalFrameSize.subtract(canvasOffset * 2.0)
+  
+  /**
+   * Draw background
+   */
+
+  const backgroundScope = new scope.Layer()
   const background = new scope.Path.Rectangle({
     point: [0, 0],
     size: scope.view.size.clone(),
     fillColor: settings.backgroundColor,
   })
 
-  const postalFrameOffset = (scope.view.size.width - scope.view.size.width * settings.postalFrameOffsetFactor) * 0.5
-  const postalFrameSize = scope.view.size.subtract(postalFrameOffset * 2.0)
-  const postalFramePoint = new scope.Point(postalFrameOffset, postalFrameOffset)
+  backgroundScope.addChild(background)
 
+
+  /**
+   * Draw postal frame
+   */
+
+  const frameLayer = new scope.Layer()
   const postalFrame = new scope.Path.Rectangle({
     point: postalFramePoint,
     size: postalFrameSize,
@@ -177,19 +199,6 @@ const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (poi
     shadowOffset: new scope.Point(8.0, 8.0)
   })
 
-  const canvasOffset = postalFrameSize.width * settings.postalFrameSizeFactor * 0.5
-  const point = postalFramePoint.add(canvasOffset)
-  const size = postalFrameSize.subtract(canvasOffset * 2.0)
-
-  const postalCanvas = new scope.Path.Rectangle({
-    point: point.add(settings.strokeWidth * 0.5),
-    size: size.subtract(settings.strokeWidth * 2.0 * 0.5),
-    strokeWidth: settings.strokeWidth,
-    radius: settings.postalFrameRadius
-  })
-
-  postalCanvas.clipMask = true
-
   const postalBackground = new scope.Path.Rectangle({
     point,
     size,
@@ -197,6 +206,30 @@ const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (poi
     radius: settings.postalFrameRadius
   })
 
+  frameLayer.addChild(postalFrame)
+  frameLayer.addChild(postalBackground)
+
+  /**
+   * Draw main content
+   */
+
+  const contentLayer = new scope.Layer()
+
+
+  const container = new scope.Path.Rectangle({
+    point: size.multiply(-0.5),
+    size: size.subtract(settings.strokeWidth * 2.0 * 0.5),
+    strokeWidth: settings.strokeWidth,
+    radius: settings.postalFrameRadius,
+  })
+
+  contentLayer.addChild(container)
+
+  draw(point, size)
+  contentLayer.translate(point.add(size.multiply(0.5)))
+  contentLayer.clipped = true
+
+  const strokeLayer = new scope.Layer()
   const postalStrokeBackground = new scope.Path.Rectangle({
     point: point.add(settings.strokeWidth),
     size: size.subtract(settings.strokeWidth * 2.0),
@@ -205,33 +238,18 @@ const drawPostal = <T extends PostalContent>(scope: paper.PaperScope, draw: (poi
     radius: settings.postalFrameRadius
   })
 
-
-  background.sendToBack()
-
-  const content = draw(point, size)
-  const canvasGroup = new scope.Group()
-
-  canvasGroup.addChild(postalCanvas)
-  canvasGroup.addChild(postalBackground)
-  canvasGroup.addChild(content.group)
-  canvasGroup.addChild(postalStrokeBackground)
-
-  const group = new scope.Group()
-  group.addChild(background)
-  group.addChild(postalFrame)
-  group.addChild(canvasGroup)
+  strokeLayer.addChild(postalStrokeBackground)
+  contentLayer.activate()
 
   return {
-    group,
     background,
-    frame: postalFrame,
+    frame: undefined,
     content: {
       point,
       size,
-      group: canvasGroup,
-      background: postalBackground,
-      strokeBackground: postalStrokeBackground,
-      postalContent: content
+      group: new scope.Group(),
+      background: undefined,
+      strokeBackground: undefined
     }
   }
 }
@@ -258,19 +276,19 @@ const createGUI = (settings: PostalSettings) => {
   return gui
 }
 
-const updateSettings = <T extends PostalContent>(postal: Postal<T>) => {
+const updateSettings = (postal: Postal) => {
   const container = document.getElementById('container')
   container!.style.backgroundColor = postal.settings.backgroundColor
   postal.background.fillColor = new paper.Color(postal.settings.backgroundColor)
-  postal.frame.strokeColor = new paper.Color(postal.settings.strokeColor)
-  postal.content.background.fillColor = new paper.Color(postal.settings.backgroundColor)
-  postal.content.strokeBackground.strokeColor = new paper.Color(postal.settings.strokeColor)
+  // postal.frame.strokeColor = new paper.Color(postal.settings.strokeColor)
+  // postal.content.background.fillColor = new paper.Color(postal.settings.backgroundColor)
+  // postal.content.strokeBackground.strokeColor = new paper.Color(postal.settings.strokeColor)
 }
 
 /**
  * Recording logic
  */
-const checkRecording = <T extends PostalContent>(postal: Postal<T>, frame: number) => {
+const checkRecording = (postal: Postal, frame: number) => {
   const animationFrame = frame % postal.recordingFrames
 
   if (postal.isRecordingRequested) {
