@@ -2,27 +2,20 @@ import GUI from 'lil-gui'
 import * as paper from 'paper'
 import { CanvasCapture } from 'canvas-capture'
 
-export interface CanvasContent{
-  group?: paper.Group
-  point: paper.Point,
-  size: paper.Size,
-  background?: paper.Path
-  strokeBackground?: paper.Path
-}
-
 export interface Postal {
   canvas: HTMLCanvasElement
   preview: HTMLCanvasElement
   view: paper.View
   settings: PostalSettings
-  background: paper.Path,
-  content: CanvasContent
-  frame?: paper.Path,
   gui: GUI,
   isRecordingRequested: boolean
   isRecording: boolean
   recordingFrames: number
   scope: paper.PaperScope
+  frame: paper.Path,
+  frameStroke: paper.Path,
+  background: paper.Path,
+  contentBackground: paper.Path
 }
 
 export interface PostalSettings {
@@ -70,16 +63,16 @@ const defaultSettings: PostalSettings = {
   recordingFormat: RecordingFormat.GIF
 }
 
-export const create = (
+export const create = <T>(
   scope: paper.PaperScope,
-  onDraw: (point: paper.Point, size: paper.Size) => void, 
-  onAnimate: ( frame: number) => void,
+  onDraw: (canvasSize: paper.Size) => T, 
+  onAnimate: (content: T, frame: number) => void,
   settings?: PostalParams): Postal => {
 
   const finalSettings = {...defaultSettings, ...settings}
   const canvas = setupCanvas(scope, finalSettings)
   const postalElements = drawPostal(scope, onDraw, finalSettings)
-  const gui = createGUI(finalSettings)
+  const gui = createGUI(postalElements, finalSettings)
 
   const postal: Postal = {
     ...canvas,
@@ -93,9 +86,9 @@ export const create = (
     gui
   }
 
+  updateSettings(postal, finalSettings)
   scope.view.onFrame = (event: any) => {
-    updateSettings(postal)
-    onAnimate(event.count)
+    onAnimate(postalElements.content, event.count)
     drawPreview(canvas, finalSettings)
     checkRecording(postal, event.count)
   }
@@ -159,7 +152,7 @@ const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { prev
   }
 }
 
-const drawPostal = (scope: paper.PaperScope, draw: (point: paper.Point, size: paper.Size) => void, settings: PostalSettings) => {
+const drawPostal = <T>(scope: paper.PaperScope, draw: (size: paper.Size) => T, settings: PostalSettings) => {
   const postalFrameOffset = (scope.view.size.width - scope.view.size.width * settings.postalFrameOffsetFactor) * 0.5
   const postalFrameSize = scope.view.size.subtract(postalFrameOffset * 2.0)
   const postalFramePoint = new scope.Point(postalFrameOffset, postalFrameOffset)
@@ -225,12 +218,12 @@ const drawPostal = (scope: paper.PaperScope, draw: (point: paper.Point, size: pa
 
   contentLayer.addChild(container)
 
-  draw(point, size)
+  const content = draw(size)
   contentLayer.translate(point.add(size.multiply(0.5)))
   contentLayer.clipped = true
 
   const strokeLayer = new scope.Layer()
-  const postalStrokeBackground = new scope.Path.Rectangle({
+  const postalFrameStroke = new scope.Path.Rectangle({
     point: point.add(settings.strokeWidth),
     size: size.subtract(settings.strokeWidth * 2.0),
     strokeColor: settings.strokeColor,
@@ -238,19 +231,15 @@ const drawPostal = (scope: paper.PaperScope, draw: (point: paper.Point, size: pa
     radius: settings.postalFrameRadius
   })
 
-  strokeLayer.addChild(postalStrokeBackground)
+  strokeLayer.addChild(postalFrameStroke)
   contentLayer.activate()
 
   return {
     background,
-    frame: undefined,
-    content: {
-      point,
-      size,
-      group: new scope.Group(),
-      background: undefined,
-      strokeBackground: undefined
-    }
+    content,
+    frame: postalFrame,
+    frameStroke: postalFrameStroke,
+    contentBackground: postalBackground
   }
 }
 
@@ -267,22 +256,22 @@ const drawPreview = ({preview, canvas}: {preview: HTMLCanvasElement, canvas: HTM
 /**
  * Settings update functions 
  */
-const createGUI = (settings: PostalSettings) => {
+const createGUI = (postal: any, settings: PostalSettings) => {
   const gui = new GUI()
   const folder = gui.addFolder('Postal')
-  folder.addColor(settings, 'backgroundColor')
-  folder.addColor(settings, 'strokeColor')
+  folder.addColor(settings, 'backgroundColor').onChange(() => updateSettings(postal, settings))
+  folder.addColor(settings, 'strokeColor').onChange(() => updateSettings(postal, settings))
 
   return gui
 }
 
-const updateSettings = (postal: Postal) => {
+const updateSettings = (postal: Postal, settings: PostalSettings) => {
   const container = document.getElementById('container')
-  container!.style.backgroundColor = postal.settings.backgroundColor
-  postal.background.fillColor = new paper.Color(postal.settings.backgroundColor)
-  // postal.frame.strokeColor = new paper.Color(postal.settings.strokeColor)
-  // postal.content.background.fillColor = new paper.Color(postal.settings.backgroundColor)
-  // postal.content.strokeBackground.strokeColor = new paper.Color(postal.settings.strokeColor)
+  container!.style.backgroundColor = settings.backgroundColor
+  postal.background.fillColor = new paper.Color(settings.backgroundColor)
+  postal.frame.strokeColor = new paper.Color(settings.strokeColor)
+  postal.contentBackground.fillColor = new paper.Color(settings.backgroundColor)
+  postal.frameStroke.strokeColor = new paper.Color(settings.strokeColor)
 }
 
 /**
