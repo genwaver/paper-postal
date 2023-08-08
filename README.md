@@ -13,7 +13,7 @@ This tiny library offers a quick setup to easily create and export SVG drawings 
 ## Installation
 
 ```shell
-> npm i paper-postal
+npm i paper-postal
 ```
 
 Import it using
