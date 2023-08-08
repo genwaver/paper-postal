@@ -1,4 +1,4 @@
-# Paper-Postal
+# paper-postal
 
 This tiny library offers a quick setup to easily create and export SVG drawings and animations 🎨👨‍🎨 
 
