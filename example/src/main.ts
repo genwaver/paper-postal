@@ -10,7 +10,7 @@ const draw = (canvasSize: paper.Size): Content => {
  const rectangle = new paper.Shape.Rectangle({
    center: [0.0, 0.0],
    size: canvasSize.multiply(0.45),
-   strokeColor: '#b338ff',
+   strokeColor: '#000',
    fillColor: 'white',
    strokeWidth: 2.5,
  })
