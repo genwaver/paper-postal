@@ -52,6 +52,12 @@ export enum RecordingFormat {
   WEBM = 'webm'
 }
 
+export enum CaptureFormat {
+  SVG = 'svg',
+  PNG = 'png',
+  JPG = 'jpg'
+}
+
 const defaultSettings: PostalSettings = {
   previewSize: new paper.Size(810, 810),
   postalSize: new paper.Size(960, 960),
@@ -106,9 +112,36 @@ export const create = <T>(
   return postal
 }
 
-export const record = (postal: Postal, frames: number) => {
+export const record = (postal: Postal, frames: number, format: RecordingFormat = RecordingFormat.GIF) => {
+  postal.settings.recordingFormat = format
   postal.isRecordingRequested = true
   postal.recordingFrames = frames
+}
+
+export const capture = (postal: Postal, format: CaptureFormat = CaptureFormat.SVG) => {
+  switch(format) {
+    case CaptureFormat.SVG:
+      captureSVG(postal)
+      break
+    case CaptureFormat.PNG:
+      CanvasCapture.init(postal.canvas)
+      CanvasCapture.takePNGSnapshot()
+      break
+    case CaptureFormat.JPG:
+      CanvasCapture.init(postal.canvas)
+      CanvasCapture.takeJPEGSnapshot()
+      break
+  }
+}
+
+const captureSVG = (postal: Postal) => {
+  const svg = postal.scope.project.exportSVG({asString: true})
+  const link = document.createElement('a')
+  const url = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg as string)
+
+  link.href = url
+  link.download = 'SVG_Capture.svg'
+  link.click()
 }
 
 
@@ -325,7 +358,9 @@ const checkRecording = (postal: Postal, frame: number) => {
 const beginRecording = (format: RecordingFormat) => {
   switch(format) {
     case RecordingFormat.GIF:
-      CanvasCapture.beginGIFRecord()
+      CanvasCapture.beginGIFRecord({ onExportProgress: (progress) => {
+        console.log(`Exporting... ${Math.round(progress * 100)}% complete.`)
+      }})
       break
     case RecordingFormat.PNG:
       CanvasCapture.beginPNGFramesRecord({ onExportProgress: (progress) => {

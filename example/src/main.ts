@@ -1,6 +1,6 @@
 import './style.css'
 import * as paper from 'paper'
-import * as Postal from 'paper-postal'
+import { Postal } from 'paper-postal'
 
 interface Content {
   rectangle: paper.Shape.Rectangle
@@ -24,5 +24,14 @@ const draw = (canvasSize: paper.Size): Content => {
 const animate = (content: Content, _frame: number) => {
   content.rectangle.rotate(1.5)
 }
+
+const squarePostal = Postal.create(paper, draw, animate)
+
+document.addEventListener('click', () => {
+  Postal.record(squarePostal, 60)
+})
+
+document.addEventListener('keyup', () => {
+  Postal.capture(squarePostal, Postal.CaptureFormat.SVG)
+})
  
-Postal.create(paper, draw, animate)
