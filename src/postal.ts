@@ -30,7 +30,9 @@ export interface PostalSettings {
   backgroundColor: string,
   strokeWidth: number,
   shadowBlur: number,
-  recordingFormat: RecordingFormat
+  recordingFormat: RecordingFormat,
+  showSettings: boolean
+  showFrame: boolean
 }
 
 export interface PostalParams {
@@ -39,7 +41,9 @@ export interface PostalParams {
   exportScale?: number
   frameColor?: string,
   strokeColor?: string,
-  backgroundColor?: string
+  backgroundColor?: string,
+  showSettings?: boolean,
+  showFrame?: boolean
 }
 
 export enum RecordingFormat {
@@ -56,10 +60,12 @@ const defaultSettings: PostalSettings = {
   postalFrameSizeFactor: 0.1,
   postalFrameRadius: 4.0,
   frameColor: 'white',
-  strokeColor: '#b338ff',
-  backgroundColor: '#fff0f8',
+  strokeColor: '#000',
+  backgroundColor: '#fff',
   strokeWidth: 2.75,
   shadowBlur: 8.0,
+  showSettings: false,
+  showFrame: true,
   recordingFormat: RecordingFormat.GIF
 }
 
@@ -73,6 +79,10 @@ export const create = <T>(
   const canvas = setupCanvas(scope, finalSettings)
   const postalElements = drawPostal(scope, onDraw, finalSettings)
   const gui = createGUI(postalElements, finalSettings)
+
+  postalElements.frame.visible = finalSettings.showFrame
+  postalElements.frameStroke.visible = finalSettings.showFrame
+  gui.show(finalSettings.showSettings)
 
   const postal: Postal = {
     ...canvas,
@@ -109,7 +119,13 @@ export const record = (postal: Postal, frames: number) => {
  */
 
 const setupCanvas = (scope: paper.PaperScope, settings: PostalSettings) : { preview: HTMLCanvasElement, canvas: HTMLCanvasElement } => {
+  document.documentElement.style.margin = '0px'
+  document.documentElement.style.width = '100%'
+  document.documentElement.style.height = '100%'
+
   document.body.style.margin = '0px'
+  document.body.style.width = '100%'
+  document.body.style.height = '100%'
 
   const container: HTMLDivElement = document.createElement('div')
   container.style.width = '100%'
