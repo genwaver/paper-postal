@@ -11,6 +11,8 @@ export interface Postal {
   isRecordingRequested: boolean
   isRecording: boolean
   recordingFrames: number
+  point: paper.Point,
+  size: paper.Size,
   scope: paper.PaperScope
   frame: paper.Path,
   frameStroke: paper.Path,
@@ -103,8 +105,11 @@ export const create = <T>(
   }
 
   updateSettings(postal, finalSettings)
-  scope.view.onFrame = (event: any) => {
+
+  scope.project.activeLayer.view.onFrame = (event: any) => {
+    scope.project.activeLayer.translate(postal.size.multiply(-0.5).subtract(postal.point.x))
     onAnimate(postalElements.content, event.count)
+    scope.project.activeLayer.translate(postal.size.multiply(0.5).add(postal.point.x))
     drawPreview(canvas, finalSettings)
     checkRecording(postal, event.count)
   }
@@ -286,6 +291,8 @@ const drawPostal = <T>(scope: paper.PaperScope, draw: (size: paper.Size) => T, s
   return {
     background,
     content,
+    point,
+    size,
     frame: postalFrame,
     frameStroke: postalFrameStroke,
     contentBackground: postalBackground
